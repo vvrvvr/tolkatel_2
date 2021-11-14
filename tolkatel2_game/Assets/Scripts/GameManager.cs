@@ -5,95 +5,47 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] public GameObject pointer;
-    [SerializeField] public GameObject pointer_set;
     [SerializeField] LayerMask groundLayer;
-    [SerializeField] private Player player;
+    [SerializeField] Camera mainCamera;
+    [SerializeField] Transform transf;
+    [SerializeField] Transform directionArrowTransform;
     public static GameManager Singleton;
-    private Camera mainCamera;
-
-    private const float CHOOSE_POINT = 0;
-    private const float POINT_SET = 1;
-    private const float CHARACTER_MOVING = 2;
-    private const float WAIT = 3;
-    private float currentState;
-    [HideInInspector] public bool EndGame;
-
-
+    private Transform pointerTransform;
 
     private void Awake()
     {
-        if(Singleton != null)
+        if (Singleton != null)
         {
             Destroy(gameObject);
             return;
         }
         Singleton = this;
-        mainCamera = Camera.main;
+
+    }
+
+    private void Start()
+    {
         pointer.SetActive(false);
-        pointer_set.SetActive(false);
-        currentState = CHOOSE_POINT;
-        EndGame = false;
+        pointerTransform = pointer.GetComponent<Transform>();
     }
 
     private void Update()
     {
-        if (player != null)
+        RaycastHit rayHit;
+        if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out rayHit, Mathf.Infinity, groundLayer))
         {
-            if (player.rb.velocity.magnitude > 0)
-            {
-                currentState = CHARACTER_MOVING;
-                pointer.SetActive(false);
-                pointer_set.SetActive(false);
-            }
-            switch (currentState)
-            {
-                case CHOOSE_POINT:
-                    player.hascontrol = false;
-
-                    RaycastHit rayHit;
-                    if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out rayHit, Mathf.Infinity, groundLayer))
-                    {
-                        pointer.SetActive(true);
-                        player.directionArrow.SetActive(true);
-                        MovePointer(rayHit.point);
-                        player.SetArrowDirection(pointer.GetComponent<Transform>());
-                        if (Input.GetMouseButton(0))
-                        {
-                            pointer.SetActive(false);
-                            pointer_set.SetActive(true);
-                            pointer_set.GetComponent<Transform>().position = rayHit.point;
-                            currentState = POINT_SET;
-                        }
-                    }
-                    else
-                    {
-                        pointer.SetActive(false);
-                        player.directionArrow.SetActive(false);
-                    }
-
-                    break;
-                case POINT_SET:
-                    player.hascontrol = true;
-                    if (player.rb.velocity.magnitude > 0)
-                    {
-                        pointer_set.SetActive(false);
-                        currentState = CHARACTER_MOVING;
-                    }
-                    break;
-                case CHARACTER_MOVING:
-                    player.directionArrow.SetActive(false);
-                    player.hascontrol = false;
-                    if (player.rb.velocity.magnitude <= 0)
-                    {
-                        currentState = CHOOSE_POINT;
-                    }
-                    break;
-                case WAIT:
-                    //заглушка на случай
-
-                    break;
-            }
+            //player.directionArrow.SetActive(true);
+            pointer.SetActive(true);
+            MovePointer(rayHit.point);
+            SetArrowDirection(pointerTransform);
+            //player.SetArrowDirection(pointer.GetComponent<Transform>());
         }
+        else
+        {
+            pointer.SetActive(false);
+            //player.directionArrow.SetActive(false);
+        }
+
     }
 
     public void MovePointer(Vector3 pos)
@@ -101,23 +53,9 @@ public class GameManager : MonoBehaviour
         pointer.GetComponent<Transform>().position = pos;
     }
 
-    public void PlayerDeath()
+    public void SetArrowDirection(Transform pointToLook)
     {
-        player.Death();
+        var lookPos = new Vector3(pointToLook.position.x, transf.position.y, pointToLook.position.z);
+        directionArrowTransform.LookAt(lookPos);
     }
-
-    public void Endgame()
-    {
-       
-        player.hascontrol = false;
-        player.rb.velocity = Vector3.zero;
-        pointer.SetActive(false);
-        pointer_set.SetActive(false);
-        player.directionArrow.SetActive(false);
-        currentState = WAIT;
-        EndGame = true;
-        player = null;
-    }
-
-   
 }
