@@ -8,7 +8,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] LayerMask groundLayer;
     [SerializeField] Camera mainCamera;
     [SerializeField] Transform transf;
+    [SerializeField] private Rigidbody playerRb;
     [SerializeField] Transform directionArrowTransform;
+    public float moveForce;
     public static GameManager Singleton;
     private Transform pointerTransform;
 
@@ -34,28 +36,37 @@ public class GameManager : MonoBehaviour
         RaycastHit rayHit;
         if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out rayHit, Mathf.Infinity, groundLayer))
         {
-            //player.directionArrow.SetActive(true);
             pointer.SetActive(true);
             MovePointer(rayHit.point);
             SetArrowDirection(pointerTransform);
-            //player.SetArrowDirection(pointer.GetComponent<Transform>());
         }
         else
         {
             pointer.SetActive(false);
-            //player.directionArrow.SetActive(false);
         }
 
+        if(Input.GetMouseButtonDown(0))
+        {
+            MovePlayer();
+        }
     }
 
     public void MovePointer(Vector3 pos)
     {
-        pointer.GetComponent<Transform>().position = pos;
+        pointerTransform.position = pos;
     }
 
     public void SetArrowDirection(Transform pointToLook)
     {
         var lookPos = new Vector3(pointToLook.position.x, transf.position.y, pointToLook.position.z);
         directionArrowTransform.LookAt(lookPos);
+    }
+
+    private void MovePlayer()
+    {
+        var direction = new Vector3(pointerTransform.position.x - transf.position.x, 0f, pointerTransform.position.z - transf.position.z).normalized;
+        playerRb.AddForce(direction * moveForce, ForceMode.Impulse);
+        direction = Vector3.zero;
+        
     }
 }
