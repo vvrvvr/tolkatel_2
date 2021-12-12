@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] Transform transf;
     [SerializeField] private Rigidbody playerRb;
     [SerializeField] Transform directionArrowTransform;
+    [SerializeField] private float jumpPower;
+    [SerializeField] private float brakePower;
     public float moveForce;
     public static GameManager Singleton;
     private Transform pointerTransform;
@@ -45,9 +47,18 @@ public class GameManager : MonoBehaviour
             pointer.SetActive(false);
         }
 
-        if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
             MovePlayer();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            JumpPlayer();
+        }
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            Brake();
         }
     }
 
@@ -67,6 +78,18 @@ public class GameManager : MonoBehaviour
         var direction = new Vector3(pointerTransform.position.x - transf.position.x, 0f, pointerTransform.position.z - transf.position.z).normalized;
         playerRb.AddForce(direction * moveForce, ForceMode.Impulse);
         direction = Vector3.zero;
-        
+
+    }
+    private void JumpPlayer()
+    {
+        playerRb.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
+    }
+
+    private void Brake()
+    {
+        var currentDir = playerRb.velocity.normalized;
+        currentDir.y = 0f;
+        playerRb.AddForce(-currentDir * brakePower, ForceMode.Impulse);
+        Debug.Log("brake");
     }
 }
